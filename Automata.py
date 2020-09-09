@@ -74,6 +74,7 @@ class NFA(Automata):
     def __init__(self, ststate, transFunc, finStates):
         super().__init__(ststate,transFunc,finStates)
 
+    #returns next state, even if it's a list of states or None
     def DELTA(self,letter,ststate = -1):
         if ststate == -1:
             ststate = self.startState
@@ -86,6 +87,7 @@ class NFA(Automata):
             return -1
         return self.deltaT[ststate][letter]
 
+    #follows all possible paths and returns a list of all the endstates
     def DELTAHat(self, word, currstate = -1, endstates = []):
         if currstate == -1:
             currstate = self.startState
@@ -103,12 +105,14 @@ class NFA(Automata):
             self.DELTAHat(word[1:], nextState)
         return endstates
 
+    #checks if there is a final state in the deltahat endstates
     def acceptedWord(self,word):
         for x in self.DELTAHat(word):
             if x in self.finalStates:
                 return True
         return False
 
+    #uses subset construction to convert nfa to a dfa that accepts the same words
     def toDFA(self):
         Q = statePermutations(len(self.deltaT), "", [])
         ststate = self.startState
@@ -130,31 +134,34 @@ class NFA(Automata):
                     else:
                         newDelta[x].append(temp)
                 else:
-                    newDelta[x].append(self.DELTA(y,Q[x]))
+                    if self.DELTA(y,Q[x]) == None:
+                        newDelta[x].append([])
+                    else:
+                        newDelta[x].append(self.DELTA(y,Q[x]))
+
         #removing dud states
         newQ = removeExtraState(Q,newDelta,ststate)
         newDelta2 = []
-
         for x in range(len(Q)):
             if Q[x] in newQ:
                 newDelta2.append(newDelta[x])
-
+        Q = newQ
         #making finalstates
-        for x in range(len(newQ)):
-            if type(newQ[x]) is int:
+        for x in range(len(Q)):
+            if type(Q[x]) is int:
                 if x in self.finStates:
                     finalStates.append(x)
             else:
-                for y in newQ[x]:
+                for y in Q[x]:
                     if y in self.finStates:
                         finalStates.append(x)
                         break
 
         #transliterating delta
-        for x in range(len(newQ)):
+        for x in range(len(Q)):
             for y in range(len(newDelta2)):
                 for z in range(len(newDelta2[y])):
-                    if newDelta2[y][z] == newQ[x]:
+                    if newDelta2[y][z] == Q[x]:
                         newDelta2[y][z] = x
 
         dfa = DFA(ststate, newDelta2, finalStates)
