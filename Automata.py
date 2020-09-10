@@ -114,6 +114,12 @@ class DFA(Automata):
 			for l in range(len(self.deltaT[q])):
 				gr.add([q, self.deltaT[q][l]])
 		return gr
+	
+	#converts to NFA object, even though it doesn't actually add any nondeterminism
+	def toNFA(self):
+		nfa = NFA(self.startState,self.deltaT,self.finStates)
+		nfa.setSigma(self.sigma)
+		return nfa
 
 class NFA(Automata):
 	def __init__(self, ststate, transFunc, finStates):
