@@ -134,18 +134,18 @@ class NFA(Automata):
             return -1
         next = self.deltaT[ststate][letter]
 	#don't use showSteps for NFAs, I'm too lazy to figure out a way to show the branches all sexy like
-        if self.showSteps:
-            if type(next) is int:
-                print("s%d -> s%d" % (ststate,next))
-            elif type(next) is list:
-                temp = ""
-                for x in next:
-                    temp += "s" + str(ststate) + " -> s" + str(x)
-                    if x != next[len(next) - 1]:
-                        temp += "\nOR\n"
-                print(temp)
-            else:
-                print("Branch End")
+#        if self.showSteps:
+#            if type(next) is int:
+#                print("s%d -> s%d" % (ststate,next))
+#            elif type(next) is list:
+#                temp = ""
+#                for x in next:
+#                    temp += "s" + str(ststate) + " -> s" + str(x)
+#                    if x != next[len(next) - 1]:
+#                        temp += "\nOR\n"
+#                print(temp)
+#            else:
+#                print("Branch End")
         return next
 
     #follows all possible paths and returns a list of all the endstates
@@ -215,15 +215,19 @@ class NFA(Automata):
                         newDelta[x].append(self.DELTA(y,Q[x]))
 
         if self.showSteps:
-            print("Transistion Function for Q:")
-            for x in newDelta:
-                print(x)
+            print("Transistion Function for Q:\nQ              delta")
+            for x in range(len(newDelta)):
+		spaces = "              "
+		if type(Q[x]) is not int:
+		    for y in range(len(str(Q[x])) - 1):
+			spaces = spaces[1:]
+                print(str(Q[x]) + spaces + str(newDelta[x]))
             print("")
         #removing dud states
 	#get list of states that can actually be used
         newQ = findVisitedStates(Q,newDelta,ststate)
         if self.showSteps:
-            print("Eliminated States that Can't be Visited:")
+            print("Q, after removing states that can't be visited:")
             for x in newQ:
                 print(x)
             print("")
@@ -235,8 +239,12 @@ class NFA(Automata):
         Q = newQ
         if self.showSteps:
             print("Transistion Function without Eliminated States:")
-            for x in newDelta2:
-                print(x)
+            for x in range(len(newDelta2)):
+		spaces = "              "
+		if type(Q[x]) is not int:
+		    for y in range(len(str(Q[x])) - 1):
+			spaces = spaces[1:]
+                print(str(Q[x]) + spaces + str(newDelta2[x]))
             print("")
         #making finalstates (any state that has an nfa's final state in it is a state)
         for x in range(len(Q)):
@@ -259,8 +267,6 @@ class NFA(Automata):
         dfa = DFA(ststate, newDelta2, finalStates)
         dfa.setSigma(self.sigma)
         return dfa
-            
-        
 
 #type: ('u' = union, 'i' = intersection, 'c' = complement)
 #if using complement function, only include the dfa1 parameter
