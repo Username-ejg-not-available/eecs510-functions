@@ -85,7 +85,20 @@ class NFA(Automata):
         else:
             print("Error: provided letter is not in the alphabet")
             return -1
-        return self.deltaT[ststate][letter]
+        next = self.deltaT[ststate][letter]
+        if self.showSteps:
+            if type(next) is int:
+                print("s%d -> s%d" % (ststate,next))
+            elif type(next) is list:
+                temp = ""
+                for x in next:
+                    temp += "s" + str(ststate) + " -> s" + str(x)
+                    if x != next[len(next) - 1]:
+                        temp += "\nOR\n"
+                print(temp)
+            else:
+                print("Branch End")
+        return next
 
     #follows all possible paths and returns a list of all the endstates
     def DELTAHat(self, word, currstate = -1, endstates = []):
@@ -108,13 +121,18 @@ class NFA(Automata):
     #checks if there is a final state in the deltahat endstates
     def acceptedWord(self,word):
         for x in self.DELTAHat(word):
-            if x in self.finalStates:
+            if x in self.finStates:
                 return True
         return False
 
     #uses subset construction to convert nfa to a dfa that accepts the same words
     def toDFA(self):
         Q = statePermutations(len(self.deltaT), "", [])
+        if self.showSteps:
+            print("State Permutations:")
+            for x in Q:
+                print(x)
+            print("")
         ststate = self.startState
         finalStates = []
         newDelta = [[] for column in range(len(Q))]
@@ -139,13 +157,28 @@ class NFA(Automata):
                     else:
                         newDelta[x].append(self.DELTA(y,Q[x]))
 
+        if self.showSteps:
+            print("Transistion Function for Q:")
+            for x in newDelta:
+                print(x)
+            print("")
         #removing dud states
         newQ = removeExtraState(Q,newDelta,ststate)
+        if self.showSteps:
+            print("Eliminated States that Can't be Visited:")
+            for x in newQ:
+                print(x)
+            print("")
         newDelta2 = []
         for x in range(len(Q)):
             if Q[x] in newQ:
                 newDelta2.append(newDelta[x])
         Q = newQ
+        if self.showSteps:
+            print("Transistion Function without Eliminated States:")
+            for x in newDelta2:
+                print(x)
+            print("")
         #making finalstates
         for x in range(len(Q)):
             if type(Q[x]) is int:
