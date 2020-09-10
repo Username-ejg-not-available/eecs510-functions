@@ -2,7 +2,49 @@ from Graph import DirGraph
 from Graph import Graph
 from Util import bSort
 
+"""
+Examples:
+#DFA
+#rows are the different states, columns are the input letters
+delta1 = [[0,1],
+	  [1,0]]
+#accepted words have even number of 1s
+dfa1 = DFA(0,delta1,[1])
+dfa1.acceptedWord("00101") returns true
+dfa1.setSigma(["R","~"])
+dfa1.acceptedWord("RRR~RR~~") returns false
+
+#dfaCompl accepts words that have odd number of bs
+dfaCompl = productDFA('c',dfa1)
+
+delta2 = [[1,0],
+	  [2,0],
+	  [3,0],
+	  [3,0]]
+#accepts words that end with '000'
+dfa2 = DFA(0,delta2,[3])
+dfa2.setSigma(["R","~"])
+
+#both dfas must have identical alphabet for productDFA
+#i can be replaced with u, same delta, different final states
+dfaProduct('i',dfa1,dfa2)
+
+#NFA
+#Nondeterminate transitions should be done as a list
+#lack of transition should be None
+#example is HW2 question 1
+delta3 = [[ [0,1], 0],
+	   [ 2, None ],
+	   [ 3, None ]
+	   [ 3, None ]]
+	   
+nfa = NFA(0,delta,[3])
+nfa.setSigma(["a","b"])
+dfaFromNfa = nfa.toDFA()
+"""
+
 class Automata:
+    #ststate is startState index, delta is transition matrix, finalStates are a list of final states
     def __init__(self,ststate,delta,finalstates):
         self.startState = ststate
         self.deltaT = delta
@@ -26,13 +68,16 @@ class DFA(Automata):
     #returns next state from ststate when given a certain letter
     #has stroke if letter is not in alphabet
     def delta(self, letter, ststate = -1):
+    	#no value specified means start state
         if (ststate == -1):
             ststate = self.startState
+        #convert the letter from the alphabet into an index for deltaT
         for x in range(len(self.sigma)):
             if self.sigma[x] == letter:
                 letter = x
                 break
         else:
+            #have stroke if letter isnt in alphabet
             print("Error: provided letter is not in the alphabet")
             return -1
         next = self.deltaT[ststate][letter]
@@ -54,7 +99,7 @@ class DFA(Automata):
     def acceptedWord(self, word):
         return self.deltaHat(word) in self.finStates
 
-    #converts to directed graph, loses input values
+    #converts to directed graph, loses input values, not useful but what the heck
     def convertToDirGraph(self):
         gr = DirGraph(len(self.deltaT))
         for q in range(len(self.deltaT)):
@@ -62,7 +107,7 @@ class DFA(Automata):
                 gr.add([q, self.deltaT[q][l]])
         return gr
 
-    #converts to directed graph, loses input values
+    #converts to directed graph, loses input values, not useful
     def convertToGraph(self):
         gr = Graph(len(self.deltaT))
         for q in range(len(self.deltaT)):
@@ -78,14 +123,17 @@ class NFA(Automata):
     def DELTA(self,letter,ststate = -1):
         if ststate == -1:
             ststate = self.startState
-        for x in range(len(self.sigma)):
+        #convert letter into index
+	for x in range(len(self.sigma)):
             if self.sigma[x] == letter:
                 letter = x
                 break
         else:
+	    #die if letter not in alphabet
             print("Error: provided letter is not in the alphabet")
             return -1
         next = self.deltaT[ststate][letter]
+	#don't use showSteps for NFAs, I'm too lazy to figure out a way to show the branches all sexy like
         if self.showSteps:
             if type(next) is int:
                 print("s%d -> s%d" % (ststate,next))
@@ -104,14 +152,16 @@ class NFA(Automata):
     def DELTAHat(self, word, currstate = -1, endstates = []):
         if currstate == -1:
             currstate = self.startState
+	#reached end of word, attempt to add state to our list
         if word == "":
             if currstate not in endstates:
                 endstates.append(currstate)
             return
         nextState = self.DELTA(word[0],currstate)
+	#None means that this branch is invalid, can't follow it for entirety of the word
         if nextState == None:
             return
-        if isinstance(nextState, list):
+        if type(nextState) is list:
             for x in nextState:
                 self.DELTAHat(word[1:], x)
         else:
@@ -126,7 +176,9 @@ class NFA(Automata):
         return False
 
     #uses subset construction to convert nfa to a dfa that accepts the same words
+    #showSteps might actually work for this, it'll just be long
     def toDFA(self):
+	#get subset list
         Q = statePermutations(len(self.deltaT), "", [])
         if self.showSteps:
             print("State Permutations:")
@@ -136,11 +188,14 @@ class NFA(Automata):
         ststate = self.startState
         finalStates = []
         newDelta = [[] for column in range(len(Q))]
+	#get delta for all the subsets in Q
         for x in range(len(newDelta)):
             for y in self.sigma:
+		#subset is more than 2 states long
                 if (type(Q[x]) is list):
                     temp = []
                     for z in range(len(Q[x])):
+			#sometimes states point to nondeterminate places, need to add all the options
                         temp2 = self.DELTA(y,int(Q[x][z]))
                         if type(temp2) is int:
                             temp.append(temp2)
@@ -151,7 +206,9 @@ class NFA(Automata):
                         newDelta[x].append(temp[0])
                     else:
                         newDelta[x].append(temp)
+		#subset is 1 state long
                 else:
+		    #add the possible states to newDelta
                     if self.DELTA(y,Q[x]) == None:
                         newDelta[x].append([])
                     else:
@@ -163,13 +220,15 @@ class NFA(Automata):
                 print(x)
             print("")
         #removing dud states
-        newQ = removeExtraState(Q,newDelta,ststate)
+	#get list of states that can actually be used
+        newQ = findVisitedStates(Q,newDelta,ststate)
         if self.showSteps:
             print("Eliminated States that Can't be Visited:")
             for x in newQ:
                 print(x)
             print("")
         newDelta2 = []
+	#get delta corresponding to usable functions
         for x in range(len(Q)):
             if Q[x] in newQ:
                 newDelta2.append(newDelta[x])
@@ -179,7 +238,7 @@ class NFA(Automata):
             for x in newDelta2:
                 print(x)
             print("")
-        #making finalstates
+        #making finalstates (any state that has an nfa's final state in it is a state)
         for x in range(len(Q)):
             if type(Q[x]) is int:
                 if x in self.finStates:
@@ -190,7 +249,7 @@ class NFA(Automata):
                         finalStates.append(x)
                         break
 
-        #transliterating delta
+        #transliterating delta (changing it to not name its states after subsets but instead after indices)
         for x in range(len(Q)):
             for y in range(len(newDelta2)):
                 for z in range(len(newDelta2[y])):
@@ -205,12 +264,14 @@ class NFA(Automata):
 
 #type: ('u' = union, 'i' = intersection, 'c' = complement)
 #if using complement function, only include the dfa1 parameter
-#returns a DFA object that is the correct product of the inputs
+#returns a DFA object that is the correct product of the inputs or false if inputs are bad
 def productDFA(type, dfa1, dfa2 = DFA(0,[[]],[])):
+    #check for incompatible inputs
     if (dfa2.deltaT != [[]] and type == 'c'):
         return False
     if (dfa1.sigma != dfa2.sigma and type != 'c'):
         return False
+    #in complement, everything stays the same except finStates are inverted
     if (type == 'c'):
         result = DFA(dfa1.startState, dfa1.deltaT, dfa1.finalStates)
         result.setSigma(dfa1.sigma)
@@ -220,10 +281,12 @@ def productDFA(type, dfa1, dfa2 = DFA(0,[[]],[])):
                 newFStates.append(x)
         result.finalStates = newFStates
         return result
+    #create list of states
     Q = []
     for x in range(len(dfa1.deltaT)):
         for y in range(len(dfa2.deltaT)):
             Q.append([x,y])
+    #create transition function
     delta = [[] for column in range(len(Q))]
     for q in range(len(Q)):
         for letter in dfa1.sigma:
@@ -232,6 +295,7 @@ def productDFA(type, dfa1, dfa2 = DFA(0,[[]],[])):
                 if newLoc == Q[qnum]:
                     delta[q].append(qnum)
                     break
+    #get start state
     ststate = [dfa1.startState, dfa2.startState]
     for q in range(len(Q)):
         if ststate == Q[q]:
@@ -239,6 +303,7 @@ def productDFA(type, dfa1, dfa2 = DFA(0,[[]],[])):
             break
     result = DFA(ststate,delta,[])
     result.setSigma(dfa1.sigma)
+    #obvious differentiation between union and intersection is obvious
     if (type == 'u'):
         for q in range(len(Q)):
             if Q[q][0] in dfa1.finalStates or Q[q][1] in dfa2.finalStates:
@@ -249,14 +314,18 @@ def productDFA(type, dfa1, dfa2 = DFA(0,[[]],[])):
                 result.finalStates.append(q)
     return result
 
+#helper function for NFA.toDFA(), creates the subsets for construction
 def statePermutations(length, out = "", perms = []):
+    #this exists so I could pass in the number of states and it would create a string to make permutations with
     if type(length) is int:
         temp = ""
         for x in range(length):
             temp += str(x)
         length = temp
+    #no more permutations to make in this recursion
     if length == "":
         return
+    #creates permutations with current 'out' as a base string, only adds new combinations to perms
     for x in range(len(length)):
         out += length[x]
         temp = [int(char) for char in out]
@@ -266,15 +335,20 @@ def statePermutations(length, out = "", perms = []):
             else:
                 perms.append(temp)
         out = out[:len(out) - 1]
+    #creates new base string and attempts more permutations
     for x in range(len(length)):
         out += length[x]
         statePermutations(length[:x] + length[x+1:], out, perms)
         out = out[:len(out) - 1]
     return perms
 
-def removeExtraState(Q,delta,currstate,visited = []):
+#helper function for NFA.toDFA(), determines which states are actually used
+def findVisitedStates(Q,delta,currstate,visited = []):
+    #we're here, we're visiting, add this place to visited
     if currstate not in visited:
         visited.append(currstate)
+    #goes through possible paths from this state, adds them to visited if they're not already there
+    #eventually won't be able to add any new destinations, which is how this function actually stops
     csIndex = 0
     for x in range(len(delta[0])):
         for y in range(len(Q)):
@@ -282,5 +356,5 @@ def removeExtraState(Q,delta,currstate,visited = []):
                 csIndex = y
                 break
         if delta[csIndex][x] not in visited:
-            removeExtraState(Q,delta,delta[csIndex][x], visited)
+            findVisitedStates(Q,delta,delta[csIndex][x], visited)
     return visited
