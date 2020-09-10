@@ -178,28 +178,18 @@ class NFA(Automata):
 		#get delta for all the subsets in Q
 		for x in range(len(newDelta)):
 			for y in self.sigma:
-				#subset is more than 2 states long
-				if (type(Q[x]) is list):
-					temp = []
-					for z in range(len(Q[x])):
-						#sometimes states point to nondeterminate places, need to add all the options
-						temp2 = self.DELTA(y,int(Q[x][z]))
-						if type(temp2) is int:
+				temp = []
+				for z in range(len(Q[x])):
+					#sometimes states point to nondeterminate places, need to add all the options
+					temp2 = self.DELTA(y,int(Q[x][z]))
+					if type(temp2) is int:
+						if temp2 not in temp:
 							temp.append(temp2)
-						elif type(temp2) is list:
-							for a in temp2:
+					elif type(temp2) is list:
+						for a in temp2:
+							if a not in temp:
 								temp.append(a)
-					if len(temp) == 1:
-						newDelta[x].append(temp[0])
-					else:
-						newDelta[x].append(temp)
-				#subset is 1 state long
-				else:
-					#add the possible states to newDelta
-					if self.DELTA(y,Q[x]) == None:
-						newDelta[x].append([])
-					else:
-						newDelta[x].append(self.DELTA(y,Q[x]))
+				newDelta[x].append(bSort(temp,len(temp)))
 
 		if self.showSteps:
 			print("Transistion Function for Q:\nQ              delta")
@@ -323,10 +313,7 @@ def statePermutations(length, out = "", perms = []):
 		out += length[x]
 		temp = [int(char) for char in out]
 		if bSort(temp, len(temp)) not in perms:
-			if len(temp) == 1:
-				perms.append(temp[0])
-			else:
-				perms.append(temp)
+			perms.append(temp)
 		out = out[:len(out) - 1]
 	#creates new base string and attempts more permutations
 	for x in range(len(length)):
@@ -339,7 +326,10 @@ def statePermutations(length, out = "", perms = []):
 def findVisitedStates(Q,delta,currstate,visited = []):
 	#we're here, we're visiting, add this place to visited
 	if currstate not in visited:
-		visited.append(currstate)
+		if type(currstate) is int:
+			visited.append([currstate])
+		else:
+			visited.append(currstate)
 	#goes through possible paths from this state, adds them to visited if they're not already there
 	#eventually won't be able to add any new destinations, which is how this function actually stops
 	csIndex = 0
