@@ -2,47 +2,6 @@ from Graph import DirGraph
 from Graph import Graph
 from Util import bSort
 
-"""
-Examples:
-#DFA
-#rows are the different states, columns are the input letters
-delta1 = [[0,1],
-	  [1,0]]
-#accepted words have even number of 1s
-dfa1 = DFA(0,delta1,[1])
-dfa1.acceptedWord("00101") returns true
-dfa1.setSigma(["R","~"])
-dfa1.acceptedWord("RRR~RR~~") returns false
-
-#dfaCompl accepts words that have odd number of bs
-dfaCompl = productDFA('c',dfa1)
-
-delta2 = [[1,0],
-	  [2,0],
-	  [3,0],
-	  [3,0]]
-#accepts words that end with '000'
-dfa2 = DFA(0,delta2,[3])
-dfa2.setSigma(["R","~"])
-
-#both dfas must have identical alphabet for productDFA
-#i can be replaced with u, same delta, different final states
-dfaProduct('i',dfa1,dfa2)
-
-#NFA
-#Nondeterminate transitions should be done as a list
-#lack of transition should be None
-#example is HW2 question 1
-delta3 = [[ [0,1], 0],
-	   [ 2, None ],
-	   [ 3, None ]
-	   [ 3, None ]]
-	   
-nfa = NFA(0,delta,[3])
-nfa.setSigma(["a","b"])
-dfaFromNfa = nfa.toDFA()
-"""
-
 class Automata:
 	#ststate is startState index, delta is transition matrix, finalStates are a list of final states
 	def __init__(self,ststate,delta,finalstates):
