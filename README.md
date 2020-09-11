@@ -13,7 +13,6 @@ Don't want to do the calculations? Boy do I have news for you.
 * [NFA functions](#FunctionsNFA)  
 
 ### AutomataVariables
-There are 3 classes, Automata and its subclasses (DFA and NFA)  
 * `deltaT`  
 This is the delta function you put in. Print this after NFA.toDFA() or the productDFA function to see the new transition function  
 * `finStates`  
@@ -41,10 +40,11 @@ There are various functions you can use with a DFA:
 * setSigma(list)  
 Imagine the problem gives you sigma = {a,b}. What person wants to have to use their brain to transform that to {0,1} to use with the function?  
 `dfa.setSigma(["a","b"])`  
-As long as sigma is the same length, you can change it to anything.  
-Using letters that are not in sigma will cause other functions to give errors.
+As long as sigma is the same length as it was, you can change it to anything.  
+Using letters in the other functions that are not in sigma will cause other functions to give errors.
 * delta(letter, current state [optional parameter, defaults to start state])  
 Just put the next letter (as a string), and the state you are starting in (as a number, as indexed in delta)  
+Compatible with `showSteps`, will print the transistions (by proxy, deltaHat and acceptedWord are also compatible)  
 `dfa.delta("a",0)`  
 * deltaHat(word)  
 Starting from the start state, calls delta() a whole bunch until it reaches the end of the word. Returns the last state it's in  
@@ -82,7 +82,7 @@ Same as DFA
 Same as dfa, returns list if there are multiple transistions, None if there are none  
 `nfa.DELTA("a",0)`  
 * DELTAHat(word)
-Returns list of possible end states for the given word
+Returns list of possible end states for the given word  
 `nfa.DELTAHat("aababababaab")`
 * acceptedWord(word)
 Returns if any of the end states given by DELTAHat are final states  
