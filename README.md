@@ -67,8 +67,9 @@ To create an NFA:
 Unlike DFAs, NFAs can have multiple or even no transitions for a specific state letter combo.  
 To show no transitions, write `None`  
 To show multiple, write them as a list  
+IMPORTANT: NFAs support epsilon-transisions, which means epsilon must be included as the last column in delta whether you are using it or not.
 This example is problem 1 from HW2 for my class  
-`delta = [ [[0,1], 0], [2, None], [3, None], [None, None] ]`  
+`delta = [ [[0,1], 0, None], [2, None, None], [3, None, None], [None, None, None] ]`    
 * Call NFA constructor  
 The parameters are the same as DFAs. There is currently no support for multiple start states or epsilon-transitions as we haven't done them yet  
 `nfa = NFA(0,delta,[3])`  
@@ -76,8 +77,8 @@ The parameters are the same as DFAs. There is currently no support for multiple 
 ### FunctionsNFA
 Various NFA functions:
 * setSigma(list)  
-Same as DFA  
-`nfa.setSigma(["a","b"])`  
+Same as DFA, except to accomadate for the fact that epsilon is technically in sigma, you must also include "\n", which represents epsilon.
+`nfa.setSigma(["a","b", "\n"])`  
 * DELTA(letter, current state [optional parameter, defaults to start state])  
 Same as dfa, returns list if there are multiple transistions, None if there are none  
 `nfa.DELTA("a",0)`  
