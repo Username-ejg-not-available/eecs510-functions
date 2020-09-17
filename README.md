@@ -5,7 +5,8 @@ Don't want to do the calculations? Boy do I have news for you.
 Open python interpreter in same directory.  
 import the correct document/functions.  
 Get free answers.  
-NOTE: If you import entire documents instead of individual functions or classes, you must start each function/constructor call with `Automata.`  
+NOTE: If you import entire documents instead of individual functions or classes, you must start each non-member function/constructor call with `<document-name>.`  
+e.g. `Automata.productDFA('c',dfa)`  
 
 ## Table of Sadness
 * [Automata](#Automata)
@@ -83,7 +84,7 @@ The parameters are the same as DFAs.
 ### FunctionsNFA
 Various NFA functions:
 * setSigma(list)  
-Same as DFA, except to accomadate for the fact that epsilon is technically in sigma, you must also include "\n", which represents epsilon.  
+Same as DFA, except to accommodate for the fact that epsilon is technically in sigma, you must also include "\n", which represents epsilon.  
 `nfa.setSigma(["a","b", "\n"])`  
 * DELTA(letter, current state [optional parameter, defaults to start state])  
 Same as dfa, returns list if there are multiple transistions, None if there are none  
