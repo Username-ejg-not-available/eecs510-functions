@@ -1,6 +1,12 @@
 # eecs510-functions
 Don't want to do the calculations? Boy do I have news for you.
 
+## How to Use:  
+Open python interpreter in same directory.  
+import the correct document/functions.  
+Get free answers.  
+NOTE: If you import entire documents instead of individual functions or classes, you must start each function/constructor call with `Automata.`  
+
 ## Table of Sadness
 * [Automata](#Automata)
 * [Combinations and Permutations](#CandP)
@@ -67,17 +73,17 @@ To create an NFA:
 Unlike DFAs, NFAs can have multiple or even no transitions for a specific state letter combo.  
 To show no transitions, write `None`  
 To show multiple, write them as a list  
-IMPORTANT: NFAs support epsilon-transisions, which means epsilon must be included as the last column in delta whether you are using it or not.
+IMPORTANT: NFAs support epsilon-transitions, which means epsilon must be included as the last column in delta whether you are using it or not.
 This example is problem 1 from HW2 for my class  
 `delta = [ [[0,1], 0, None], [2, None, None], [3, None, None], [None, None, None] ]`    
 * Call NFA constructor  
-The parameters are the same as DFAs. There is currently no support for multiple start states or epsilon-transitions as we haven't done them yet  
+The parameters are the same as DFAs.    
 `nfa = NFA(0,delta,[3])`  
 
 ### FunctionsNFA
 Various NFA functions:
 * setSigma(list)  
-Same as DFA, except to accomadate for the fact that epsilon is technically in sigma, you must also include "\n", which represents epsilon.
+Same as DFA, except to accomadate for the fact that epsilon is technically in sigma, you must also include "\n", which represents epsilon.  
 `nfa.setSigma(["a","b", "\n"])`  
 * DELTA(letter, current state [optional parameter, defaults to start state])  
 Same as dfa, returns list if there are multiple transistions, None if there are none  
@@ -92,6 +98,9 @@ Returns if any of the end states given by DELTAHat are final states
 Creates a DFA that does the same thing as the NFA using subset construction.  
 Compatible with `showSteps`, and printing out the variables of the resulting object is recommended  
 `dfa = nfa.toDFA()`  
+* revNFA(nfa)  
+Creates an NFA that accepts words from nfa in reverse  
+`nfa2 = revNFA(nfa)`  
 
 ## CandP
 Not useful for class rn so not writing this yet

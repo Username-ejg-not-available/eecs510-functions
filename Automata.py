@@ -373,3 +373,31 @@ def findVisitedStates(Q,delta,currstate,visited = []):
 		if delta[csIndex][x] not in visited:
 			findVisitedStates(Q,delta,delta[csIndex][x], visited)
 	return visited
+
+#if nfa accepts w, this returns nfa that accepts w^R
+def revNFA(nfa):
+	finalState = [nfa.startState]
+	delta = [[[] for column in range(len(nfa.sigma))] for column in range(len(nfa.deltaT))]
+	for x in range(len(nfa.deltaT)):
+		for y in range(len(nfa.sigma)):
+			state = nfa.deltaT[x][y]
+			if type(state) is int:
+				delta[state][y].append(x)
+			elif type(state) is list:
+				for z in state:
+					delta[z][y].append(x)
+	for x in range(len(nfa.deltaT)):
+		for y in range(len(nfa.sigma)):
+			if delta[x][y] == []:
+				delta[x][y] = None
+			elif len(delta[x][y]) == 1:
+				delta[x][y] = delta[x][y][0]
+	delta.append([None for column in range(len(nfa.sigma))])
+	startState = len(delta) - 1
+	if len(nfa.finStates) == 1:
+		delta[startState][len(nfa.sigma) - 1] = nfa.finStates[0]
+	else:
+		delta[startState][len(nfa.sigma) - 1] = nfa.finStates
+	nfa2 = NFA(startState, delta, finalState)
+	nfa2.setSigma(nfa.sigma)
+	return nfa2
