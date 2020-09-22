@@ -288,13 +288,13 @@ def productDFA(type, dfa1, dfa2 = DFA(0,[[]],[])):
 		return False
 	#in complement, everything stays the same except finStates are inverted
 	if (type == 'c'):
-		result = DFA(dfa1.startState, dfa1.deltaT, dfa1.finalStates)
+		result = DFA(dfa1.startState, dfa1.deltaT, dfa1.finStates)
 		result.setSigma(dfa1.sigma)
 		newFStates = []
 		for x in range(len(result.deltaT)):
-			if x not in result.finalStates:
+			if x not in result.finStates:
 				newFStates.append(x)
-		result.finalStates = newFStates
+		result.finStates = newFStates
 		return result
 	#create list of states
 	Q = []
@@ -321,12 +321,12 @@ def productDFA(type, dfa1, dfa2 = DFA(0,[[]],[])):
 	#obvious differentiation between union and intersection is obvious
 	if (type == 'u'):
 		for q in range(len(Q)):
-			if Q[q][0] in dfa1.finalStates or Q[q][1] in dfa2.finalStates:
-				result.finalStates.append(q)
+			if Q[q][0] in dfa1.finStates or Q[q][1] in dfa2.finStates:
+				result.finStates.append(q)
 	else:
 		for q in range(len(Q)):
-			if Q[q][0] in dfa1.finalStates and Q[q][1] in dfa2.finalStates:
-				result.finalStates.append(q)
+			if Q[q][0] in dfa1.finStates and Q[q][1] in dfa2.finStates:
+				result.finStates.append(q)
 	return result
 
 #helper function for NFA.toDFA(), creates the subsets for construction
