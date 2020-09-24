@@ -4,9 +4,8 @@ Don't want to do the calculations? Boy do I have news for you.
 ## How to Use:  
 Open python interpreter in same directory.  
 import the correct document/functions.  
+(eg `from Automata import *`)
 Get free answers.  
-NOTE: If you import entire documents instead of individual functions or classes, you must start each non-member function/constructor call with `<document-name>.`  
-e.g. `Automata.productDFA('c',dfa)`  
 
 ## Table of Sadness
 * [Automata](#Automata)
@@ -67,6 +66,12 @@ To do union ('u') or intersection ('i'), use appropriate type character and 2 df
 `productDFA('u',dfa1,dfa2)`
 * toNFA()  
 Creates an NFA object with the same parameters. Kinda dumb since it's basically identical.  
+* concatNFA(nfa1,nfa2)  
+Creates an NFA that accepts the concatenation of the 2 inputs. Not tested with DFAs but should theoretically work  
+`concatNFA(dfa1,dfa2)`  
+* regex(dfa)
+Creates a regex line for the DFA. Often cancerous. Cannot promise it works but I think it does  
+`regex(dfa)`
 
 ### CreateNFA
 To create an NFA:
@@ -98,10 +103,14 @@ Returns if any of the end states given by DELTAHat are final states
 * toDFA()  
 Creates a DFA that does the same thing as the NFA using subset construction.  
 Compatible with `showSteps`, and printing out the variables of the resulting object is recommended  
+Will always work if there are no epsilon transitions, otherwise will only work sometimes
 `dfa = nfa.toDFA()`  
 * revNFA(nfa)  
 Creates an NFA that accepts words from nfa in reverse  
 `nfa2 = revNFA(nfa)`  
+* concatNFA(nfa1,nfa2)  
+Same as DFA. Do not know if it works with 1 DFA and 1 NFA or 2 DFAs. Will work for 2 NFAs I think  
+`concatNFA(nfa1,nfa2)`
 
 ## CandP
 Not useful for class rn so not writing this yet

@@ -1,6 +1,7 @@
 from Graph import DirGraph
 from Graph import Graph
 from Util import bSort
+from copy import deepcopy
 
 class Automata:
 	#ststate is startState index, delta is transition matrix, finalStates are a list of final states
@@ -27,7 +28,6 @@ class DFA(Automata):
 	#returns next state from ststate when given a certain letter
 	#has stroke if letter is not in alphabet
 	def delta(self, letter, ststate = -1):
-		#no value specified means start state
 		if (ststate == -1):
 			ststate = self.startState
 		#convert the letter from the alphabet into an index for deltaT
@@ -139,6 +139,14 @@ class NFA(Automata):
 
 	#gets epsilon closure for a state
 	def epsClosure(self,state,endstates=[]):
+		if len(endstates) == 0:
+			for letter in range(len(self.sigma) - 1):
+				if type(self.deltaT[state][letter]) is int:
+					endstates.append(self.deltaT[state][letter])
+				elif type(self.deltaT[state][letter]) is list:
+					for x in self.deltaT[state][letter]:
+						endstates.append(x)
+				
 		if state not in endstates:
 			endstates.append(state)
 		next = self.deltaT[state][len(self.sigma) - 1]
@@ -187,7 +195,7 @@ class NFA(Automata):
 	#showSteps might actually work for this, it'll just be long
 	def subsetConstruction(self):
 		#get subset list
-		Q = statePermutations(len(self.deltaT), "", [])
+		Q = statePermutations(len(self.deltaT))
 		if self.showSteps:
 			print("State Permutations:")
 			for x in Q:
@@ -197,11 +205,11 @@ class NFA(Automata):
 		newDelta = [[] for column in range(len(Q))]
 		#get delta for all the subsets in Q
 		for x in range(len(newDelta)):
-			for y in self.sigma:
+			for y in range(len(self.sigma) - 1):
 				temp = []
 				for z in range(len(Q[x])):
 					#sometimes states point to nondeterminate places, need to add all the options
-					temp2 = self.DELTA(y,int(Q[x][z]))
+					temp2 = self.DELTA(self.sigma[y],int(Q[x][z]))
 					if type(temp2) is int:
 						if temp2 not in temp:
 							temp.append(temp2)
@@ -230,9 +238,11 @@ class NFA(Automata):
 			print("")
 		newDelta2 = []
 		#get delta corresponding to usable functions
-		for x in range(len(Q)):
-			if Q[x] in newQ:
-				newDelta2.append(newDelta[x])
+		for x in range(len(newQ)):
+			for y in range(len(Q)):
+				if newQ[x] == Q[y]:
+					newDelta2.append(newDelta[y])
+					break
 		if self.showSteps:
 			print("Transistion Function without Eliminated States:")
 			for x in range(len(newDelta2)):
@@ -242,7 +252,7 @@ class NFA(Automata):
 						spaces = spaces[1:]
 				print(str(newQ[x]) + spaces + str(newDelta2[x]))
 			print("")
-		return [newQ,newDelta2,ststate]
+		return [newQ,newDelta2,0]
 
 	def epsilonConstruction(self, currstate = -1, Q = [], delta = []):
 		if currstate == -1:
@@ -294,45 +304,84 @@ def productDFA(type, dfa1, dfa2 = DFA(0,[[]],[])):
 		for x in range(len(result.deltaT)):
 			if x not in result.finStates:
 				newFStates.append(x)
+		if dfa1.showSteps:
+			print("Just reversed final states lmao")
 		result.finStates = newFStates
 		return result
 	#create list of states
 	Q = []
+	if dfa.showSteps or dfa2.showSteps:
+		print("Create list of states:")
 	for x in range(len(dfa1.deltaT)):
 		for y in range(len(dfa2.deltaT)):
+			if dfa1.showSteps or dfa2.showSteps:
+				print([x,y])
 			Q.append([x,y])
-	#create transition function
+	tablestr = ""
+	for letter in dfa1.sigma:
+		tablestr += "          " + letter
+	if dfa1.showSteps or dfa2.showSteps:
+		print("\nDetermine transitions for new dfa by checking the transitions of individual dfas with their current state and letter:\nQ" + tablestr)
 	delta = [[] for column in range(len(Q))]
 	for q in range(len(Q)):
+		astr = str(Q[q])
 		for letter in dfa1.sigma:
 			newLoc = [dfa1.delta(letter, Q[q][0]), dfa2.delta(letter, Q[q][1])]
 			for qnum in range(len(Q)):
 				if newLoc == Q[qnum]:
+					astr += "     " + str(newLoc)
 					delta[q].append(qnum)
 					break
-	#get start state
+		if dfa1.showSteps or dfa2.showSteps:
+			print(astr)
+	
 	ststate = [dfa1.startState, dfa2.startState]
+	if dfa1.showSteps or dfa2.showSteps:
+		print("\nNew Start State = [dfa1 start state, dfa2 start state]:")
+		print(ststate + "\n")
+		
 	for q in range(len(Q)):
 		if ststate == Q[q]:
 			ststate = q
 			break
 	result = DFA(ststate,delta,[])
 	result.setSigma(dfa1.sigma)
-	#obvious differentiation between union and intersection is obvious
+	
 	if (type == 'u'):
+		if dfa1.showSteps or dfa2.showSteps:
+			print("Final States are those states that are in dfa1s OR dfa2s final states\n")
 		for q in range(len(Q)):
 			if Q[q][0] in dfa1.finStates or Q[q][1] in dfa2.finStates:
 				result.finStates.append(q)
 	else:
+		if dfa1.showSteps or dfa2.showSteps:
+		print("Final States are those states that are in dfa1s AND dfa2s final states\n")
 		for q in range(len(Q)):
 			if Q[q][0] in dfa1.finStates and Q[q][1] in dfa2.finStates:
 				result.finStates.append(q)
 	return result
 
+def concatNFA(nfa1,nfa2):
+	delta = deepcopy(nfa1.deltaT).append(deepcopy(nfa2.deltaT))
+	stst = nfa.startState
+	finst = nfa2.finStates
+	
+	if type(delta[len(nfa.deltaT) - 1][len(nfa1.sigma) - 1]) is None:
+		delta[len(nfa1.deltaT) - 1][len(nfa1.sigma) - 1] = nfa2.startState
+	elif type(delta[len(nfa.deltaT) - 1][len(nfa1.sigma) - 1]) is int:
+		delta[len(nfa1.deltaT) - 1][len(nfa1.sigma) - 1] = [delta[len(nfa1.deltaT) - 1][len(nfa1.sigma) - 1], nfa1.startState]
+	else:
+		delta[len(nfa1.deltaT) - 1][len(nfa1.sigma) - 1].append(nfa2.startState)
+
+	newnfa = NFA(stst,delta,finst)
+	newnfa.setSigma(nfa1.sigma)
+	return newnfa
+
 #helper function for NFA.toDFA(), creates the subsets for construction
-def statePermutations(length, out = "", perms = []):
+def statePermutations(length, out = "", perms = [], exit = 0):
 	#this exists so I could pass in the number of states and it would create a string to make permutations with
 	if type(length) is int:
+		exit = pow(2, length)
 		temp = ""
 		for x in range(length):
 			temp += str(x)
@@ -347,10 +396,12 @@ def statePermutations(length, out = "", perms = []):
 		if bSort(temp, len(temp)) not in perms:
 			perms.append(temp)
 		out = out[:len(out) - 1]
+		if len(perms) == exit:
+			return perms
 	#creates new base string and attempts more permutations
 	for x in range(len(length)):
 		out += length[x]
-		statePermutations(length[:x] + length[x+1:], out, perms)
+		statePermutations(length[:x] + length[x+1:], out, perms,exit)
 		out = out[:len(out) - 1]
 	return perms
 
@@ -365,11 +416,11 @@ def findVisitedStates(Q,delta,currstate,visited = []):
 	#goes through possible paths from this state, adds them to visited if they're not already there
 	#eventually won't be able to add any new destinations, which is how this function actually stops
 	csIndex = 0
+	for y in range(len(Q)):
+		if currstate == Q[y] or [currstate] == Q[y]:
+			csIndex = y
+			break
 	for x in range(len(delta[0])):
-		for y in range(len(Q)):
-			if currstate == Q[y]:
-				csIndex = y
-				break
 		if delta[csIndex][x] not in visited:
 			findVisitedStates(Q,delta,delta[csIndex][x], visited)
 	return visited
@@ -401,3 +452,117 @@ def revNFA(nfa):
 	nfa2 = NFA(startState, delta, finalState)
 	nfa2.setSigma(nfa.sigma)
 	return nfa2
+
+def regex(dfa):
+	#in order by state number, then loops, outgoing,incoming, then [letter, state] for the latter 2
+	#ex: connTable[0] = [ [ 'a' ], [ 'b', 2 ], ['a', 2] ]
+	connTable = [["",[],[]] for x in range(len(dfa.deltaT))]
+	for x in range(len(dfa.deltaT)):
+		for y in range(len(dfa.sigma)):
+			if dfa.deltaT[x][y] == x:
+				if len(connTable[x][0]):
+					connTable[x][0] += " + " + dfa.sigma[y]
+				else:
+					connTable[x][0] = dfa.sigma[y]
+			else:
+				connTable[x][1].append([dfa.sigma[y],dfa.deltaT[x][y]]) #add state to outgoing
+				connTable[dfa.deltaT[x][y]][2].append([dfa.sigma[y],x]) #add x to incoming of delta[x][y]
+	stateCount = len(connTable)
+	for x in range(len(connTable)):
+		if x not in dfa.finStates and x != dfa.startState:
+			elimState(connTable, x)
+			if dfa.showSteps:
+				print("Removing state " + str(x) + ":\n[Loop, [connections leaving the state], [connections coming in]]\n")
+				for y in connTable:
+					if y != ["",[],[]]:
+						print(y)
+				print("")
+			stateCount -= 1
+	for x in range(len(connTable)):
+		if x == dfa.startState and stateCount > 1:
+			elimState(connTable, x, dfa.startState not in dfa.finStates)
+			if dfa.showSteps:
+				print("Removing state " + str(x) + ":\n[Loop, [connections leaving the state], [connections coming in]]\n")
+				for y in connTable:
+					if y != ["",[],[]]:
+						print(y)
+				print("")
+	for x in connTable:
+		if x != ["",[],[]]:
+			if dfa.startState in dfa.finStates:
+				return "(" + x[0] + ")*"
+			else:
+				return x[0]
+
+def elimState(connTable, state, changeStartState=False):
+	#adds paths between adj states if there is a path to be made
+	for incom in connTable[state][2]:
+		for outgo in connTable[state][1]:
+			if incom[1] == outgo[1]:
+				continue
+			word = ""
+			for z in connTable[incom[1]][1]:
+				if z[1] == outgo[1]:
+					word += z[0] + " + "
+					connTable[incom[1]][1].remove(z)
+					connTable[outgo[1]][2].remove([z[0], incom[1]])
+					break
+
+			word += incom[0]
+			if len(connTable[state][0]):
+				if len(connTable[state][0]) > 1 or '+' in connTable[state][0]:
+					word += "(" + connTable[state][0] + ")*"
+				else:
+					word += connTable[state][0] + "*"
+			word += outgo[0]
+			#add new connection
+			connTable[incom[1]][1].append([word,outgo[1]])
+			connTable[outgo[1]][2].append([word,incom[1]])
+
+	#adds loops to adjacent states if there is a 2 way connection
+	for outgoingState in connTable[state][1]:  
+		word = ""
+		if not changeStartState:
+			#current loop on adjacent + (incoming letter * loop on removed * outgoing letter)
+			if len(connTable[outgoingState[1]][0]):
+				word += connTable[outgoingState[1]][0] + " + "
+			incomingState = []
+			for x in connTable[state][2]:
+				if x[1] == outgoingState[1]:
+					incomingState = x
+					break
+			word += incomingState[0]
+			if len(connTable[state][0]):
+				if len(connTable[state][0]) > 1 or '+' in connTable[state][0][0]:
+					word += "(" + connTable[state][0] + ")*"
+				else:
+					word += connTable[state][0] + "*"
+			word += outgoingState[0]
+		else:
+			#loop on remove Node * transition to adj node
+			lastState = connTable[state][1][0][1]
+			loop1 = ""
+			loop2 = ""
+			if len(connTable[state][0]):
+				if len(connTable[state][0]) > 1 or '+' in connTable[state][0][0]:
+					loop1 = "(" + connTable[state][0] + ")*"
+				else:
+					loop1 = connTable[state][0] + "*"
+			word += loop1 + connTable[state][1][0][0]
+			if len(connTable[lastState][0]):
+				if len(connTable[lastState][0]) > 1 or '+' in connTable[lastState][0][0]:
+					loop2 = "(" + connTable[lastState][0] + ")*"
+				else:
+					loop2 = connTable[lastState][0] + "*"
+			if len(connTable[lastState][1]):
+				word += loop2 + "(" + connTable[lastState][1][0][0] + loop1 + connTable[state][1][0][0] + loop2 + ")*"
+			else:
+				word += loop2
+
+		connTable[outgoingState[1]][0] = word
+
+	for x in range(len(connTable)):
+		connTable[x][1] = list(filter(lambda y: y[1] != state,connTable[x][1]))
+		connTable[x][2] = list(filter(lambda y: y[1] != state,connTable[x][2]))
+
+	connTable[state] = ["",[],[]]
