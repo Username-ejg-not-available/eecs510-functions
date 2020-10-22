@@ -138,15 +138,9 @@ class NFA(Automata):
 		return False
 
 	#gets epsilon closure for a state
-	def epsClosure(self,state,endstates=[]):
-		if len(endstates) == 0:
-			for letter in range(len(self.sigma) - 1):
-				if type(self.deltaT[state][letter]) is int:
-					endstates.append(self.deltaT[state][letter])
-				elif type(self.deltaT[state][letter]) is list:
-					for x in self.deltaT[state][letter]:
-						endstates.append(x)
-				
+	def epsClosure(self,state,endstates=None):
+		if endstates == None:
+			endstates = []
 		if state not in endstates:
 			endstates.append(state)
 		next = self.deltaT[state][len(self.sigma) - 1]
@@ -158,134 +152,75 @@ class NFA(Automata):
 		return endstates
 
 	def toDFA(self):
-		useSubset = True
-		for x in self.deltaT:
-			if x[len(self.sigma) - 1] != None:
-				useSubset = False
-				break
-		if useSubset:
-			info = self.subsetConstruction()
-		else:
-			info = self.epsilonConstruction()
+		newQ = []
+		newDelta = []
+		newF = []
 
-		#determining final states
-		finalStates = []
-		for x in range(len(info[0])):
-			if type(info[0][x]) is int:
-				if x in self.finStates:
-					finalStates.append(x)
-			else:
-				for y in info[0][x]:
-					if y in self.finStates:
-						finalStates.append(x)
-						break
+		#generates delta matrix and list of states for other calculations
+		[newQ,newDelta] = self._toDFAHelp(self.startState)
 
-		#transliterating delta
-		for x in range(len(info[0])):
-			for y in range(len(info[1])):
-				for z in range(len(info[1][y])):
-					if info[1][y][z] == info[0][x]:
-						info[1][y][z] = x
+		#add st to newF if intersection of st and self.finstates is not empty
+		for st in range(len(newQ)):
+			for fst in self.finStates:
+				if fst in newQ[st]:
+					newF.append(st)
 
-		dfa = DFA(info[2],info[1],finalStates)
+		#transliterates newDelta to not be butt ugly
+		for st in range(len(newQ)):
+			for dst in range(len(newDelta)):
+				for dst2 in range(len(newDelta[dst])):
+					if newDelta[dst][dst2] == newQ[st]:
+						newDelta[dst][dst2] = st
+		
+		dfa = DFA(0,newDelta,newF)
 		dfa.setSigma(self.sigma[:len(self.sigma) - 1])
 		return dfa
 
-	#uses subset construction to convert nfa to a dfa that accepts the same words
-	#showSteps might actually work for this, it'll just be long
-	def subsetConstruction(self):
-		#get subset list
-		Q = statePermutations(len(self.deltaT))
-		if self.showSteps:
-			print("State Permutations:")
-			for x in Q:
-				print(x)
-			print("")
-		ststate = self.startState
-		newDelta = [[] for column in range(len(Q))]
-		#get delta for all the subsets in Q
-		for x in range(len(newDelta)):
-			for y in range(len(self.sigma) - 1):
-				temp = []
-				for z in range(len(Q[x])):
-					#sometimes states point to nondeterminate places, need to add all the options
-					temp2 = self.DELTA(self.sigma[y],int(Q[x][z]))
-					if type(temp2) is int:
-						if temp2 not in temp:
-							temp.append(temp2)
-					elif type(temp2) is list:
-						for a in temp2:
-							if a not in temp:
-								temp.append(a)
-				newDelta[x].append(bSort(temp,len(temp)))
+	def _toDFAHelp(self,state,Q=None,D=None):
+		if Q == None and D == None:
+			Q = []
+			D = []
+		stateIndex = len(Q)
+		#attempt to add new state to statelist, or gtfo if it already there
+		if type(state) is int:
+			ep = self.epsClosure(state)
+			if ep not in Q:
+				Q.append(bSort(ep, len(ep)))
+			else:
+				return [Q,D]
+		elif type(state) is list:
+			if state not in Q:
+				Q.append(bSort(state, len(state)))
+			else:
+				return [Q,D]
 
-		if self.showSteps:
-			print("Transistion Function for Q:\nQ              delta")
-			for x in range(len(newDelta)):
-				spaces = "              "
-				if type(Q[x]) is not int:
-					for y in range(len(str(Q[x])) - 1):
-						spaces = spaces[1:]
-				print(str(Q[x]) + spaces + str(newDelta[x]))
-			print("")
-		#removing dud states
-		#get list of states that can actually be used
-		newQ = findVisitedStates(Q,newDelta,ststate)
-		if self.showSteps:
-			print("Q, after removing states that can't be visited:")
-			for x in newQ:
-				print(x)
-			print("")
-		newDelta2 = []
-		#get delta corresponding to usable functions
-		for x in range(len(newQ)):
-			for y in range(len(Q)):
-				if newQ[x] == Q[y]:
-					newDelta2.append(newDelta[y])
-					break
-		if self.showSteps:
-			print("Transistion Function without Eliminated States:")
-			for x in range(len(newDelta2)):
-				spaces = "              "
-				if type(newQ[x]) is not int:
-					for y in range(len(str(newQ[x])) - 1):
-						spaces = spaces[1:]
-				print(str(newQ[x]) + spaces + str(newDelta2[x]))
-			print("")
-		return [newQ,newDelta2,0]
+		D.append([])
 
-	def epsilonConstruction(self, currstate = -1, Q = [], delta = []):
-		if currstate == -1:
-			currstate = self.epsClosure(self.startState)
-		if currstate not in Q:
-			Q.append(currstate)
-			delta.append([])
-		else:
-			return
+		#for every letter (except epsilon), use fancy schmancy epsclosure to find transition,
+		#then add it in the proper spot in D
+		for letter in range(len(self.sigma) - 1):
+			D[stateIndex].append([])
+			for tempstate in Q[stateIndex]:
+				tempEps = self.epsClosure(tempstate)
+				for st in tempEps:
+					de = self.DELTA(self.sigma[letter],st)
+					if type(de) is int and de not in D[stateIndex][letter]:
+						D[stateIndex][letter].append(de)
+					elif type(de) is list:
+						for x in de:
+							if x not in D[stateIndex][letter]:
+								D[stateIndex][letter].append(x)
+			bSort(D[stateIndex][letter], len(D[stateIndex][letter]))
+			#attempt to recurse to add possible new states
+			if D[stateIndex][letter] not in Q:
+				[Q,D] = self._toDFAHelp(D[stateIndex][letter], Q, D)
+		return [Q,D]
+		
 
-		#determine index of currstate in Q
-		currIndex = 0
-		for x in range(len(Q)):
-			if Q[x] == currstate:
-				currIndex = x
-				break
+		
 
-		for x in range(len(self.sigma) - 1):
-			nextState = []
-			for y in range(len(currstate)):
-				next = self.DELTA(self.sigma[x],currstate[y])
-				if type(next) is int:
-					if next not in nextState:
-						nextState.append(next)
-				elif type(next) is list:
-					for z in next:
-						if z not in nextState:
-							nextState.append(z)
-			delta[currIndex].append(nextState)
-			if self.showSteps:
-				print("Mapped: q%s -> q%s for input \"%s\"" % (currstate,nextState,self.sigma[x]))
-			self.epsilonConstruction(nextState,Q,delta)
-		return [Q,delta,0]
+		
+
 
 #type: ('u' = union, 'i' = intersection, 'c' = complement)
 #if using complement function, only include the dfa1 parameter
@@ -355,7 +290,7 @@ def productDFA(type, dfa1, dfa2 = DFA(0,[[]],[])):
 				result.finStates.append(q)
 	else:
 		if dfa1.showSteps or dfa2.showSteps:
-		print("Final States are those states that are in dfa1s AND dfa2s final states\n")
+			print("Final States are those states that are in dfa1s AND dfa2s final states\n")
 		for q in range(len(Q)):
 			if Q[q][0] in dfa1.finStates and Q[q][1] in dfa2.finStates:
 				result.finStates.append(q)

@@ -4,13 +4,13 @@ Don't want to do the calculations? Boy do I have news for you.
 ## How to Use:  
 Open python interpreter in same directory.  
 import the correct document/functions.  
-(eg `from Automata import *`)
+(eg `from Automata import *`)  
 Get free answers.  
 
 ## Table of Sadness
 * [Automata](#Automata)
 * [Combinations and Permutations](#CandP)
-* [CFGrammar] (#CFG)
+* [CFGrammar](#CFG)
 
 ## Automata
 * [Automata Variables](#AutomataVariables)  
@@ -103,8 +103,6 @@ Returns if any of the end states given by DELTAHat are final states
 `nfa.acceptedWord("ababababbaba")`  
 * toDFA()  
 Creates a DFA that does the same thing as the NFA using subset construction.  
-Compatible with `showSteps`, and printing out the variables of the resulting object is recommended  
-Will always work if there are no epsilon transitions, otherwise will only work sometimes
 `dfa = nfa.toDFA()`  
 * revNFA(nfa)  
 Creates an NFA that accepts words from nfa in reverse  
