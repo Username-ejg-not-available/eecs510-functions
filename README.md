@@ -10,6 +10,7 @@ Get free answers.
 ## Table of Sadness
 * [Automata](#Automata)
 * [Combinations and Permutations](#CandP)
+* [CFGrammar] (#CFG)
 
 ## Automata
 * [Automata Variables](#AutomataVariables)  
@@ -111,6 +112,27 @@ Creates an NFA that accepts words from nfa in reverse
 * concatNFA(nfa1,nfa2)  
 Same as DFA. Do not know if it works with 1 DFA and 1 NFA or 2 DFAs. Will work for 2 NFAs I think  
 `concatNFA(nfa1,nfa2)`
+
+## CFG  
+* [CFG Creation](#CreateCFG)  
+* [CFG functions](#FunctionsCFG)  
+
+### CreateCFG  
+To create CFG:  
+* Create productions:  
+Too lazy to parse the normal notation for productions, so instead I used the mystical power of 2d arrays  
+Each row index corresponds to the nonterminal at the same index  
+`P = [["aAb", "aBb], ["","aa"]]`  
+* Call constructor with other parameters  
+`cfg = CFG(["A","B"],["a","b"],P,"A")`  
+
+### FunctionsCFG  
+* accepted(word)  
+returns whether a word is accepted by the grammar  
+NOTE: This function currently cannot handle productions with any form of left-recursion  
+`cfg.accepted("ababbababababababbabbabbbabbababababababbababbababbababbabbabbabbababbaababa")`
+* produce(letter)  
+Takes a nonterminal and returns the list of its productions  
 
 ## CandP
 Not useful for class rn so not writing this yet
