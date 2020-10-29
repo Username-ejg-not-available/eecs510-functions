@@ -11,6 +11,7 @@ Get free answers.
 * [Automata](#Automata)
 * [Combinations and Permutations](#CandP)
 * [CFGrammar](#CFG)
+* [Turing](#Turing)
 
 ## Automata
 * [Automata Variables](#AutomataVariables)  
@@ -120,7 +121,7 @@ To create CFG:
 * Create productions:  
 Too lazy to parse the normal notation for productions, so instead I used the mystical power of 2d arrays  
 Each row index corresponds to the nonterminal at the same index  
-`P = [["aAb", "aBb], ["","aa"]]`  
+`P = [["aAb", "aBb"], ["","aa"]]`  
 * Call constructor with other parameters  
 `cfg = CFG(["A","B"],["a","b"],P,"A")`  
 
@@ -131,6 +132,22 @@ NOTE: This function currently cannot handle productions with any form of left-re
 `cfg.accepted("ababbababababababbabbabbbabbababababababbababbababbababbabbabbabbababbaababa")`
 * produce(letter)  
 Takes a nonterminal and returns the list of its productions  
+
+## Turing  
+* [Machine Creation](#CreateTuring)  
+* [Functions](#FunctionsTuring)  
+
+### CreateTuring  
+Let's just say that transition functions for Turing machines are like essays, so I wrote an example at the bottom of Turing.py, so that it wouldn't take up too much space here.  
+
+### FunctionsTuring
+* read(letter, state)  
+It's exactly like delta from DFAs or NFAs, but it returns a 3tuple in the format (nextstate,letter,dir)  
+The way I wrote this function allows for shorthands for accept/reject transitions, as seen in the example  
+`tur.read('0',2)`  
+* accept(word)  
+Put in a word, it'll show you step by step the computation and whether that word is part of the set  
+`tur.accept("10010")`  
 
 ## CandP
 Not useful for class rn so not writing this yet
